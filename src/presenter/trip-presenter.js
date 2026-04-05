@@ -4,9 +4,11 @@ import EditPointView from '../view/edit-point-view.js';
 import PointView from '../view/point-view.js';
 import TripPoint from '../view/trip-point-view.js';
 import PointListView from '../view/point-list-view.js';
-import { render, RenderPosition } from '../render.js';
-
+import NoPointsView from '../view/no-points-view.js';
+import { render, replace, RenderPosition } from '../framework/render.js';
+import {getInfoTitle, getInfoDates, getTotalCost, countFuturePoints, countPresentPoints, countPastPoints} from '../utils.js';
 export default class TripPresenter {
+
   constructor(tripModel) {
     this.model = tripModel;
 
@@ -18,20 +20,75 @@ export default class TripPresenter {
   init() {
     const { points, destinations, offers } = this.model;
 
-    render(new TripPoint(), this.mainContainer, RenderPosition.AFTERBEGIN);
-    render(new FilterView(), this.filtersContainer);
-    render(new SortView(), this.eventsContainer, RenderPosition.AFTERBEGIN);
+    const infoData = {
+      title: getInfoTitle(points, destinations),
+      dates: getInfoDates(points),
+      totalCost: getTotalCost(points, offers)
+    };
 
-    const pointListView = new PointListView();
-    render(pointListView, this.eventsContainer);
-    const pointsListContainer = pointListView.getElement();
+    const filtersInfo = {
+      future: countFuturePoints(points),
+      present: countPresentPoints(points),
+      past: countPastPoints(points)
+    };
 
-    const edPointView = new EditPointView({point: points[0], destinations, offers});
-    render(edPointView, pointsListContainer);
+    render(new TripPoint(infoData), this.mainContainer, RenderPosition.AFTERBEGIN);
+    render(new FilterView(filtersInfo), this.filtersContainer);
 
-    points.forEach((point) => {
-      const pointView = new PointView({point, destinations, offers});
-      render(pointView, pointsListContainer);
+    if (!points || !points.length) {
+      render(new NoPointsView(), this.eventsContainer);
+    } else {
+      render(new SortView(), this.eventsContainer, RenderPosition.AFTERBEGIN);
+
+      const pointListView = new PointListView();
+      render(pointListView, this.eventsContainer);
+      const pointsListContainer = pointListView.element;
+
+      points.forEach((point) => {
+        this.#renderPoint(point, destinations, offers, pointsListContainer);
+      });
+    }
+  }
+
+  #renderPoint(point, destinations, offers, container) {
+    const escKeyDownHandler = (evt) => {
+      if (evt.key === 'Escape') {
+        evt.preventDefault();
+        replaceFormToCard();
+        document.removeEventListener('keydown', escKeyDownHandler);
+      }
+    };
+
+    const closeHandler = () => {
+      replaceFormToCard();
+      document.removeEventListener('keydown', escKeyDownHandler);
+    };
+
+    const taskComponent = new PointView({
+      point, destinations, offers,
+      onArrowClick: () => {
+        replaceCardToForm();
+        document.addEventListener('keydown', escKeyDownHandler);
+      },
     });
+
+    const taskEditComponent = new EditPointView({
+      point, destinations, offers,
+      onFormSubmit: () => {
+        replaceFormToCard();
+        document.removeEventListener('keydown', escKeyDownHandler);
+      },
+      onArrowClick: closeHandler
+    });
+
+    function replaceCardToForm() {
+      replace(taskEditComponent, taskComponent);
+    }
+
+    function replaceFormToCard() {
+      replace(taskComponent, taskEditComponent);
+    }
+
+    render(taskComponent, container);
   }
 }
