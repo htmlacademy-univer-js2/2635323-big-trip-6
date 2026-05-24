@@ -132,6 +132,18 @@ function getTotalCost(points, offers) {
   }, 0);
 }
 
+
+const sortPointDay = (pointA, pointB) => new Date(pointA.dateFrom) - new Date(pointB.dateFrom);
+
+const sortPointTime = (pointA, pointB) => {
+  const durationA = new Date(pointA.dateTo) - new Date(pointA.dateFrom);
+  const durationB = new Date(pointB.dateTo) - new Date(pointB.dateFrom);
+
+  return durationB - durationA;
+};
+
+const sortPointPrice = (pointA, pointB) => pointB.basePrice - pointA.basePrice;
+
 const countFuturePoints = (points) => {
   const now = new Date();
   return points.filter((point) => new Date(point.dateFrom) > now).length;
@@ -166,6 +178,9 @@ export {
   getInfoTitle,
   getInfoDates,
   getTotalCost,
+  sortPointDay,
+  sortPointTime,
+  sortPointPrice,
   countFuturePoints,
   countPresentPoints,
   countPastPoints
