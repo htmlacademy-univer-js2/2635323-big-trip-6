@@ -70,6 +70,7 @@ export default class PointPresenter {
 
   resetView() {
     if (this.#mode !== Mode.DEFAULT) {
+      this.#pointEditComponent.updateElement(this.#getResetFormState());
       this.#replaceFormToCard();
     }
   }
@@ -78,6 +79,34 @@ export default class PointPresenter {
     this.resetView();
     remove(this.#pointComponent);
     remove(this.#pointEditComponent);
+  }
+
+  setSaving() {
+    if (this.#mode === Mode.EDITING) {
+      this.#pointEditComponent.updateElement({
+        isDisabled: true,
+        isSaving: true
+      });
+    }
+  }
+
+  setDeleting() {
+    if (this.#mode === Mode.EDITING) {
+      this.#pointEditComponent.updateElement({
+        isDisabled: true,
+        isDeleting: true
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#mode === Mode.DEFAULT) {
+      this.#pointComponent.shake();
+      return;
+    }
+
+    this.#pointEditComponent.updateElement(PointPresenter.#getInitialFormState());
+    this.#pointEditComponent.shake();
   }
 
   #replaceCardToForm() {
@@ -95,6 +124,7 @@ export default class PointPresenter {
   #escKeyDownHandler = (evt) => {
     if (evt.key === 'Escape') {
       evt.preventDefault();
+      this.#pointEditComponent.updateElement(this.#getResetFormState());
       this.#replaceFormToCard();
     }
   };
@@ -105,6 +135,7 @@ export default class PointPresenter {
   };
 
   #handleEditArrowClick = () => {
+    this.#pointEditComponent.updateElement(this.#getResetFormState());
     this.#replaceFormToCard();
   };
 
@@ -124,6 +155,13 @@ export default class PointPresenter {
     );
   };
 
+  #getResetFormState() {
+    return {
+      ...this.#point,
+      ...PointPresenter.#getInitialFormState()
+    };
+  }
+
   #handleFavoriteClick = () => {
     this.#handleDataChange(
       UserAction.UPDATE_POINT,
@@ -134,4 +172,12 @@ export default class PointPresenter {
       }
     );
   };
+
+  static #getInitialFormState() {
+    return {
+      isDisabled: false,
+      isSaving: false,
+      isDeleting: false
+    };
+  }
 }

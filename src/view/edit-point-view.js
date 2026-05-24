@@ -9,6 +9,12 @@ const DateFormat = {
   DATE_PICKER: 'd/m/y H:i',
 };
 
+const BLANK_POINT = {
+  isDisabled: false,
+  isSaving: false,
+  isDeleting: false
+};
+
 function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
   const {
     type = EVENT_TYPES[0],
@@ -17,11 +23,21 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
     dateTo = new Date(),
     basePrice = 0,
     offers: selectedOfferIds = [],
+    isDisabled = false,
+    isSaving = false,
+    isDeleting = false,
   } = point;
 
   const destination = destinations.find((dest) => dest.id === destinationId) || null;
   const typeOffers = offers[type] || [];
   const selectedOffers = typeOffers.filter((offer) => selectedOfferIds.includes(offer.id));
+  const disabledAttribute = isDisabled ? 'disabled' : '';
+  const saveButtonText = isSaving ? 'Saving...' : 'Save';
+  let resetButtonText = point.id ? 'Delete' : 'Cancel';
+
+  if (isDeleting) {
+    resetButtonText = 'Deleting...';
+  }
 
   const eventTypesTemplate = EVENT_TYPES.map((eventType) => `
     <div class="event__type-item">
@@ -32,6 +48,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
         name="event-type"
         value="${eventType}"
         ${eventType === type ? 'checked' : ''}
+        ${disabledAttribute}
       >
       <label class="event__type-label event__type-label--${eventType}" for="event-type-${eventType}-1">
         ${eventType.charAt(0).toUpperCase() + eventType.slice(1)}
@@ -56,6 +73,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               name="event-offer-${offer.id}"
               value="${offer.id}"
               ${selectedOffers.some((selected) => selected.id === offer.id) ? 'checked' : ''}
+              ${disabledAttribute}
             >
             <label class="event__offer-label" for="event-offer-${offer.id}">
               <span class="event__offer-title">${offer.title}</span>
@@ -93,10 +111,10 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               <span class="visually-hidden">Choose event type</span>
               <img class="event__type-icon" width="17" height="17" src="img/icons/${type.toLowerCase()}.png" alt="Event type icon">
             </label>
-            <input class="event__type-toggle visually-hidden" id="event-type-toggle-1" type="checkbox">
+            <input class="event__type-toggle visually-hidden" id="event-type-toggle-1" type="checkbox" ${disabledAttribute}>
 
             <div class="event__type-list">
-              <fieldset class="event__type-group">
+              <fieldset class="event__type-group" ${disabledAttribute}>
                 <legend class="visually-hidden">Event type</legend>
                 ${eventTypesTemplate}
               </fieldset>
@@ -115,6 +133,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               value="${destination ? destination.name : ''}"
               list="destination-list-1"
               required
+              ${disabledAttribute}
             >
             <datalist id="destination-list-1">
               ${destinationsTemplate}
@@ -129,6 +148,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               type="text"
               name="event-start-time"
               value="${humanizeEditDate(dateFrom)}"
+              ${disabledAttribute}
             >
             &mdash;
             <label class="visually-hidden" for="event-end-time-1">To</label>
@@ -138,6 +158,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               type="text"
               name="event-end-time"
               value="${humanizeEditDate(dateTo)}"
+              ${disabledAttribute}
             >
           </div>
 
@@ -154,12 +175,13 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               value="${basePrice}"
               min="0"
               required
+              ${disabledAttribute}
             >
           </div>
 
-          <button class="event__save-btn btn btn--blue" type="submit">Save</button>
-          <button class="event__reset-btn" type="reset">${point.id ? 'Delete' : 'Cancel'}</button>
-          <button class="event__rollup-btn" type="button">
+          <button class="event__save-btn btn btn--blue" type="submit" ${disabledAttribute}>${saveButtonText}</button>
+          <button class="event__reset-btn" type="reset" ${disabledAttribute}>${resetButtonText}</button>
+          <button class="event__rollup-btn" type="button" ${disabledAttribute}>
             <span class="visually-hidden">Open event</span>
           </button>
         </header>
@@ -238,6 +260,10 @@ export default class EditPointView extends AbstractStatefulView {
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
 
+    if (this._state.isDisabled) {
+      return;
+    }
+
     const point = {
       ...this._state,
       ...this.#getFormData()
@@ -250,12 +276,22 @@ export default class EditPointView extends AbstractStatefulView {
     this.#handleFormSubmit(point);
   };
 
-  #arrowClickHandler = () => {
+  #arrowClickHandler = (evt) => {
+    evt.preventDefault();
+
+    if (this._state.isDisabled) {
+      return;
+    }
+
     this.#handleArrowClick?.();
   };
 
   #resetClickHandler = (evt) => {
     evt.preventDefault();
+
+    if (this._state.isDisabled) {
+      return;
+    }
 
     if (this._state.id) {
       this.#handleDeleteClick(this._state);
@@ -272,7 +308,7 @@ export default class EditPointView extends AbstractStatefulView {
   #typeChangeHandler = (evt) => {
     evt.preventDefault();
 
-    if (!evt.target.classList.contains('event__type-input')) {
+    if (this._state.isDisabled || !evt.target.classList.contains('event__type-input')) {
       return;
     }
 
@@ -285,6 +321,10 @@ export default class EditPointView extends AbstractStatefulView {
 
   #destinationChangeHandler = (evt) => {
     evt.preventDefault();
+
+    if (this._state.isDisabled) {
+      return;
+    }
 
     const selectedDestination = this.#destinations.find((destination) => destination.name === evt.target.value);
 
@@ -354,6 +394,9 @@ export default class EditPointView extends AbstractStatefulView {
   }
 
   static parsePointToState(point) {
-    return {...point};
+    return {
+      ...BLANK_POINT,
+      ...point
+    };
   }
 }
