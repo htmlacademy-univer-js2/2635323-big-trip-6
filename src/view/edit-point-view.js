@@ -3,7 +3,7 @@ import {
   formatDate,
   formatTime,
 } from '../utils.js';
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 
 function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
@@ -173,8 +173,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
   `;
 }
 
-export default class EditPointView extends AbstractView{
-  #point = null;
+export default class EditPointView extends AbstractStatefulView {
   #destinations = null;
   #offers = null;
   #handleFormSubmit = null;
@@ -182,21 +181,31 @@ export default class EditPointView extends AbstractView{
 
   constructor({point = null, destinations = [], offers = {}, onFormSubmit, onArrowClick}) {
     super();
-    this.#point = point;
+    this._setState(EditPointView.parsePointToState(point));
     this.#destinations = destinations;
     this.#offers = offers;
     this.#handleFormSubmit = onFormSubmit;
     this.#handleArrowClick = onArrowClick;
 
+    this._restoreHandlers();
+  }
+
+  get template() {
+    return createEditPointTemplate(this._state, this.#destinations, this.#offers);
+  }
+
+  _restoreHandlers() {
     this.element.querySelector('.event--edit')
       .addEventListener('submit', this.#formSubmitHandler);
 
     this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#ArrowClickHandler);
-  }
+      .addEventListener('click', this.#arrowClickHandler);
 
-  get template() {
-    return createEditPointTemplate(this.#point, this.#destinations, this.#offers);
+    this.element.querySelector('.event__type-group')
+      .addEventListener('change', this.#typeChangeHandler);
+
+    this.element.querySelector('.event__input--destination')
+      .addEventListener('change', this.#destinationChangeHandler);
   }
 
   #formSubmitHandler = (evt) => {
@@ -204,7 +213,53 @@ export default class EditPointView extends AbstractView{
     this.#handleFormSubmit();
   };
 
-  #ArrowClickHandler = () => {
+  #arrowClickHandler = () => {
     this.#handleArrowClick();
   };
+
+  #typeChangeHandler = (evt) => {
+    evt.preventDefault();
+
+    if (!evt.target.classList.contains('event__type-input')) {
+      return;
+    }
+
+    this.updateElement({
+      ...this.#getFormData(),
+      type: evt.target.value,
+      offers: []
+    });
+  };
+
+  #destinationChangeHandler = (evt) => {
+    evt.preventDefault();
+
+    const selectedDestination = this.#destinations.find((destination) => destination.name === evt.target.value);
+
+    if (!selectedDestination) {
+      return;
+    }
+
+    this.updateElement({
+      ...this.#getFormData(),
+      destination: selectedDestination.id
+    });
+  };
+
+  #getFormData() {
+    const destinationName = this.element.querySelector('.event__input--destination').value;
+    const selectedDestination = this.#destinations.find((destination) => destination.name === destinationName);
+    const checkedOffers = Array.from(this.element.querySelectorAll('.event__offer-checkbox:checked'))
+      .map((offer) => offer.value);
+
+    return {
+      basePrice: Number(this.element.querySelector('.event__input--price').value),
+      destination: selectedDestination ? selectedDestination.id : this._state.destination,
+      offers: checkedOffers
+    };
+  }
+
+  static parsePointToState(point) {
+    return {...point};
+  }
 }
