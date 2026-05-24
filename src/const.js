@@ -39,6 +39,12 @@ const LOREM_IPSUM_SENTENCES = [
   'In rutrum ac purus sit amet tempus.'
 ];
 
+const SortType = {
+  DAY: 'day',
+  TIME: 'time',
+  PRICE: 'price'
+};
+
 const OFFERS = {
   taxi: ['Extra luggage', 'Child seat'],
   bus: ['Wi-Fi', 'Snacks'],
@@ -54,6 +60,7 @@ const OFFERS = {
 export {
   EVENT_TYPES,
   CITIES,
+  SortType,
   LOREM_IPSUM_SENTENCES,
   OFFERS
 };
