@@ -2,8 +2,13 @@ import TripPresenter from './presenter/trip-presenter.js';
 import FilterPresenter from './presenter/filter-presenter.js';
 import Model from './model/task-model.js';
 import FilterModel from './model/filter-model.js';
+import TripApiService from './api/trip-api-service.js';
 
-const pointsModel = new Model();
+const AUTHORIZATION = `Basic ${Math.random().toString(36).slice(2)}`;
+const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
+
+const tripApiService = new TripApiService(END_POINT, AUTHORIZATION);
+const pointsModel = new Model({apiService: tripApiService});
 const filterModel = new FilterModel();
 
 const filterPresenter = new FilterPresenter({
@@ -19,3 +24,4 @@ const tripPresenter = new TripPresenter({
 
 filterPresenter.init();
 tripPresenter.init();
+pointsModel.init();
