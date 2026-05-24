@@ -45,6 +45,25 @@ const SortType = {
   PRICE: 'price'
 };
 
+const FilterType = {
+  EVERYTHING: 'everything',
+  FUTURE: 'future',
+  PRESENT: 'present',
+  PAST: 'past'
+};
+
+const UserAction = {
+  UPDATE_POINT: 'UPDATE_POINT',
+  ADD_POINT: 'ADD_POINT',
+  DELETE_POINT: 'DELETE_POINT'
+};
+
+const UpdateType = {
+  PATCH: 'PATCH',
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR'
+};
+
 const OFFERS = {
   taxi: ['Extra luggage', 'Child seat'],
   bus: ['Wi-Fi', 'Snacks'],
@@ -61,6 +80,9 @@ export {
   EVENT_TYPES,
   CITIES,
   SortType,
+  FilterType,
+  UserAction,
+  UpdateType,
   LOREM_IPSUM_SENTENCES,
   OFFERS
 };

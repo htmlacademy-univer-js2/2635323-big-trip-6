@@ -19,7 +19,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
     offers: selectedOfferIds = [],
   } = point;
 
-  const destination = destinations.find((dest) => dest.id === destinationId) || destinations[0] || {name: '', description: '', pictures: []};
+  const destination = destinations.find((dest) => dest.id === destinationId) || null;
   const typeOffers = offers[type] || [];
   const selectedOffers = typeOffers.filter((offer) => selectedOfferIds.includes(offer.id));
 
@@ -68,7 +68,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
     </section>
   ` : '';
 
-  const destinationDescriptionTemplate = destination.description ? `
+  const destinationDescriptionTemplate = destination?.description ? `
     <section class="event__section event__section--destination">
       <h3 class="event__section-title event__section-title--destination">Destination</h3>
       <p class="event__destination-description">${destination.description}</p>
@@ -112,7 +112,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               id="event-destination-1"
               type="text"
               name="event-destination"
-              value="${destination.name}"
+              value="${destination ? destination.name : ''}"
               list="destination-list-1"
               required
             >
@@ -177,16 +177,20 @@ export default class EditPointView extends AbstractStatefulView {
   #offers = null;
   #handleFormSubmit = null;
   #handleArrowClick = null;
+  #handleDeleteClick = null;
+  #handleCancelClick = null;
   #datepickerFrom = null;
   #datepickerTo = null;
 
-  constructor({point = null, destinations = [], offers = {}, onFormSubmit, onArrowClick}) {
+  constructor({point = null, destinations = [], offers = {}, onFormSubmit, onArrowClick, onDeleteClick, onCancelClick}) {
     super();
     this._setState(EditPointView.parsePointToState(point));
     this.#destinations = destinations;
     this.#offers = offers;
     this.#handleFormSubmit = onFormSubmit;
     this.#handleArrowClick = onArrowClick;
+    this.#handleDeleteClick = onDeleteClick;
+    this.#handleCancelClick = onCancelClick;
 
     this._restoreHandlers();
   }
@@ -222,16 +226,47 @@ export default class EditPointView extends AbstractStatefulView {
     this.element.querySelector('.event__input--destination')
       .addEventListener('change', this.#destinationChangeHandler);
 
+    this.element.querySelector('.event__input--price')
+      .addEventListener('input', this.#priceInputHandler);
+
+    this.element.querySelector('.event__reset-btn')
+      .addEventListener('click', this.#resetClickHandler);
+
     this.#setDatepickers();
   }
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit();
+
+    const point = {
+      ...this._state,
+      ...this.#getFormData()
+    };
+
+    if (!this.#destinations.some((destination) => destination.id === point.destination)) {
+      return;
+    }
+
+    this.#handleFormSubmit(point);
   };
 
   #arrowClickHandler = () => {
-    this.#handleArrowClick();
+    this.#handleArrowClick?.();
+  };
+
+  #resetClickHandler = (evt) => {
+    evt.preventDefault();
+
+    if (this._state.id) {
+      this.#handleDeleteClick(this._state);
+      return;
+    }
+
+    this.#handleCancelClick();
+  };
+
+  #priceInputHandler = (evt) => {
+    evt.target.value = evt.target.value.replace(/[^0-9]/g, '');
   };
 
   #typeChangeHandler = (evt) => {
@@ -254,6 +289,11 @@ export default class EditPointView extends AbstractStatefulView {
     const selectedDestination = this.#destinations.find((destination) => destination.name === evt.target.value);
 
     if (!selectedDestination) {
+      evt.target.value = '';
+      this.updateElement({
+        ...this.#getFormData(),
+        destination: ''
+      });
       return;
     }
 
@@ -304,6 +344,7 @@ export default class EditPointView extends AbstractStatefulView {
       .map((offer) => offer.value);
 
     return {
+      type: this._state.type,
       basePrice: Number(this.element.querySelector('.event__input--price').value),
       destination: selectedDestination ? selectedDestination.id : this._state.destination,
       dateFrom: this._state.dateFrom,

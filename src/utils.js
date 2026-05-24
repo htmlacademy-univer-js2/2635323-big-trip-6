@@ -3,7 +3,8 @@ import duration from 'dayjs/plugin/duration';
 import {
   EVENT_TYPES,
   CITIES,
-  LOREM_IPSUM_SENTENCES
+  LOREM_IPSUM_SENTENCES,
+  FilterType
 } from './const.js';
 
 dayjs.extend(duration);
@@ -146,22 +147,23 @@ const sortPointTime = (pointA, pointB) => {
 
 const sortPointPrice = (pointA, pointB) => pointB.basePrice - pointA.basePrice;
 
-const countFuturePoints = (points) => {
-  const now = new Date();
-  return points.filter((point) => new Date(point.dateFrom) > now).length;
+
+const isPointFuture = (point) => new Date(point.dateFrom) > new Date();
+const isPointPresent = (point) => new Date(point.dateFrom) <= new Date() && new Date(point.dateTo) >= new Date();
+const isPointPast = (point) => new Date(point.dateTo) < new Date();
+
+const filter = {
+  [FilterType.EVERYTHING]: (points) => [...points],
+  [FilterType.FUTURE]: (points) => points.filter((point) => isPointFuture(point)),
+  [FilterType.PRESENT]: (points) => points.filter((point) => isPointPresent(point)),
+  [FilterType.PAST]: (points) => points.filter((point) => isPointPast(point))
 };
 
-const countPresentPoints = (points) => {
-  const now = new Date();
-  return points.filter((point) =>
-    new Date(point.dateFrom) <= now && new Date(point.dateTo) >= now
-  ).length;
-};
+const countFuturePoints = (points) => filter[FilterType.FUTURE](points).length;
 
-const countPastPoints = (points) => {
-  const now = new Date();
-  return points.filter((point) => new Date(point.dateTo) < now).length;
-};
+const countPresentPoints = (points) => filter[FilterType.PRESENT](points).length;
+
+const countPastPoints = (points) => filter[FilterType.PAST](points).length;
 
 export {
   getRandomArrayElement,
@@ -186,5 +188,6 @@ export {
   sortPointPrice,
   countFuturePoints,
   countPresentPoints,
-  countPastPoints
+  countPastPoints,
+  filter
 };
