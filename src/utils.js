@@ -1,8 +1,18 @@
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 import {
   EVENT_TYPES,
   CITIES,
   LOREM_IPSUM_SENTENCES
 } from './const.js';
+
+dayjs.extend(duration);
+
+const DATE_FORMAT = 'MMM DD';
+const TIME_FORMAT = 'HH:mm';
+const DATE_TIME_ATTRIBUTE_FORMAT = 'YYYY-MM-DDTHH:mm';
+const EDIT_FORM_DATE_FORMAT = 'DD/MM/YY HH:mm';
+const INFO_DATE_FORMAT = 'DD MMM';
 
 const getRandomArrayElement = (items) => items[Math.floor(Math.random() * items.length)];
 
@@ -51,39 +61,32 @@ const getRandomType = () => getRandomArrayElement(EVENT_TYPES);
 
 const getRandomCity = () => getRandomArrayElement(CITIES);
 
-const MONTHS = [
-  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
-];
+const humanizePointDate = (date) => dayjs(date).format(DATE_FORMAT).toUpperCase();
 
-const formatDate = (date) => {
-  const month = MONTHS[date.getMonth()];
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${month} ${day}`;
-};
+const humanizePointTime = (date) => dayjs(date).format(TIME_FORMAT);
 
-const formatTime = (date) => date.toTimeString().slice(0, 5);
+const humanizeDateTime = (date) => dayjs(date).format(DATE_TIME_ATTRIBUTE_FORMAT);
+
+const humanizeEditDate = (date) => dayjs(date).format(EDIT_FORM_DATE_FORMAT);
 
 const calculateDuration = (dateFrom, dateTo) => {
-  const diffInMs = dateTo - dateFrom;
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const pointDuration = dayjs.duration(dayjs(dateTo).diff(dayjs(dateFrom)));
+  const days = Math.floor(pointDuration.asDays());
+  const hours = pointDuration.hours();
+  const minutes = pointDuration.minutes();
 
-  const hours = Math.floor(diffInMinutes / 60);
-  const minutes = diffInMinutes % 60;
+  if (days > 0) {
+    return `${String(days).padStart(2, '0')}D ${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
+  }
 
   if (hours > 0) {
-    return `${hours}H ${minutes.toString().padStart(2, '0')}M`;
+    return `${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
   }
-  return `${minutes}M`;
+
+  return `${String(minutes).padStart(2, '0')}M`;
 };
 
-const formatDateTime = (date) => date.toISOString().slice(0, 16);
-
-const formatDateForTitle = (date) => {
-  const month = MONTHS[date.getMonth()];
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${day} ${month.toUpperCase()}`;
-};
+const formatDateForTitle = (date) => dayjs(date).format(INFO_DATE_FORMAT).toUpperCase();
 
 const getInfoTitle = (points, destinations) => {
   if (!points || !points.length) {
@@ -132,7 +135,6 @@ function getTotalCost(points, offers) {
   }, 0);
 }
 
-
 const sortPointDay = (pointA, pointB) => new Date(pointA.dateFrom) - new Date(pointB.dateFrom);
 
 const sortPointTime = (pointA, pointB) => {
@@ -170,10 +172,11 @@ export {
   generatePictures,
   getRandomType,
   getRandomCity,
-  formatDate,
-  formatTime,
+  humanizePointDate,
+  humanizePointTime,
+  humanizeDateTime,
+  humanizeEditDate,
   calculateDuration,
-  formatDateTime,
   formatDateForTitle,
   getInfoTitle,
   getInfoDates,

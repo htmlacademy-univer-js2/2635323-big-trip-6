@@ -1,8 +1,8 @@
 import {
-  formatDate,
-  formatTime,
+  humanizePointDate,
+  humanizePointTime,
   calculateDuration,
-  formatDateTime
+  humanizeDateTime
 } from '../utils.js';
 import AbstractView from '../framework/view/abstract-view.js';
 
@@ -17,11 +17,11 @@ function createPointTemplate(point, destination, typeOffers) {
     isFavorite
   } = point;
 
-  const dateFormatted = formatDate(dateFrom);
-  const dateTimeFrom = formatDateTime(dateFrom);
-  const dateTimeTo = formatDateTime(dateTo);
-  const timeFrom = formatTime(dateFrom);
-  const timeTo = formatTime(dateTo);
+  const dateFormatted = humanizePointDate(dateFrom);
+  const dateTimeFrom = humanizeDateTime(dateFrom);
+  const dateTimeTo = humanizeDateTime(dateTo);
+  const timeFrom = humanizePointTime(dateFrom);
+  const timeTo = humanizePointTime(dateTo);
   const duration = calculateDuration(dateFrom, dateTo);
 
   const favoriteClass = isFavorite ? 'event__favorite-btn--active' : '';
