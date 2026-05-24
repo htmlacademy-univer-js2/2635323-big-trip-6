@@ -81,6 +81,13 @@ export default class TripPresenter {
     }
 
     const points = this.#pointsModel.points;
+
+    if (!points.length) {
+      remove(this.#tripInfoComponent);
+      this.#tripInfoComponent = null;
+      return;
+    }
+
     const destinations = this.#pointsModel.destinations;
     const offers = this.#pointsModel.offers;
 

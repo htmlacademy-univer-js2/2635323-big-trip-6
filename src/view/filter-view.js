@@ -10,7 +10,7 @@ const FILTER_TITLES = {
 
 function createFilterItemTemplate(filterType, currentFilterType, filtersInfo, isDisabled) {
   const isChecked = filterType === currentFilterType;
-  const isFilterDisabled = isDisabled || (filterType !== FilterType.EVERYTHING && filtersInfo[filterType] === 0);
+  const isFilterDisabled = isDisabled || filtersInfo[filterType] === 0;
 
   return (`<div class="trip-filters__filter">
     <input
