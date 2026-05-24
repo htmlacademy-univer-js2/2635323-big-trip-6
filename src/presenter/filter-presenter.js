@@ -25,6 +25,7 @@ export default class FilterPresenter {
     this.#filterComponent = new FilterView({
       filtersInfo,
       currentFilterType: this.#filterModel.filter,
+      isDisabled: this.#pointsModel.isLoading || this.#pointsModel.isLoadingError,
       onFilterTypeChange: this.#handleFilterTypeChange
     });
 

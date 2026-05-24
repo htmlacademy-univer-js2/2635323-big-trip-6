@@ -1,17 +1,17 @@
 import Observable from '../framework/observable.js';
-import {generateMockData} from '../mock/task';
+import {UpdateType} from '../const.js';
 
 export default class Model extends Observable {
+  #apiService = null;
   #points = [];
   #destinations = [];
   #offers = {};
+  #isLoading = true;
+  #isLoadingError = false;
 
-  constructor() {
+  constructor({apiService}) {
     super();
-    const mockData = generateMockData();
-    this.#points = mockData.points;
-    this.#destinations = mockData.destinations;
-    this.#offers = mockData.offers;
+    this.#apiService = apiService;
   }
 
   get points() {
@@ -26,13 +26,45 @@ export default class Model extends Observable {
     return this.#offers;
   }
 
+  get isLoading() {
+    return this.#isLoading;
+  }
+
+  get isLoadingError() {
+    return this.#isLoadingError;
+  }
+
+  async init() {
+    try {
+      const [points, destinations, offers] = await Promise.all([
+        this.#apiService.points,
+        this.#apiService.destinations,
+        this.#apiService.offers
+      ]);
+
+      this.#points = points;
+      this.#destinations = destinations;
+      this.#offers = offers;
+      this.#isLoadingError = false;
+    } catch (err) {
+      this.#points = [];
+      this.#destinations = [];
+      this.#offers = {};
+      this.#isLoadingError = true;
+    }
+
+    this.#isLoading = false;
+    this._notify(UpdateType.INIT);
+  }
+
   setPoints(updateType, points) {
     this.#points = points;
     this._notify(updateType);
   }
 
-  updatePoint(updateType, update) {
-    const index = this.#points.findIndex((point) => point.id === update.id);
+  async updatePoint(updateType, update) {
+    const response = await this.#apiService.updatePoint(update);
+    const index = this.#points.findIndex((point) => point.id === response.id);
 
     if (index === -1) {
       throw new Error('Can\'t update non-existing point');
@@ -40,30 +72,18 @@ export default class Model extends Observable {
 
     this.#points = [
       ...this.#points.slice(0, index),
-      update,
+      response,
       ...this.#points.slice(index + 1)
     ];
 
-    this._notify(updateType, update);
+    this._notify(updateType, response);
   }
 
-  addPoint(updateType, update) {
-    this.#points = [update, ...this.#points];
-    this._notify(updateType, update);
+  addPoint() {
+    return Promise.resolve();
   }
 
-  deletePoint(updateType, update) {
-    const index = this.#points.findIndex((point) => point.id === update.id);
-
-    if (index === -1) {
-      throw new Error('Can\'t delete non-existing point');
-    }
-
-    this.#points = [
-      ...this.#points.slice(0, index),
-      ...this.#points.slice(index + 1)
-    ];
-
-    this._notify(updateType);
+  deletePoint() {
+    return Promise.resolve();
   }
 }

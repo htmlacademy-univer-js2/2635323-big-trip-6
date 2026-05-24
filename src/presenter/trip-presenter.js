@@ -4,6 +4,8 @@ import PointListView from '../view/point-list-view.js';
 import PointPresenter from './point-presenter.js';
 import EditPointView from '../view/edit-point-view.js';
 import NoPointsView from '../view/no-points-view.js';
+import LoadingView from '../view/loading-view.js';
+import FailedLoadView from '../view/failed-load-view.js';
 import {render, replace, remove, RenderPosition} from '../framework/render.js';
 import {EVENT_TYPES, FilterType, SortType, UpdateType, UserAction} from '../const.js';
 import {
@@ -25,6 +27,8 @@ export default class TripPresenter {
   #sortComponent = null;
   #pointListComponent = null;
   #noPointsComponent = null;
+  #loadingComponent = null;
+  #failedLoadComponent = null;
   #newPointComponent = null;
   #currentSortType = SortType.DAY;
   #isNewPointFormOpen = false;
@@ -57,12 +61,15 @@ export default class TripPresenter {
   }
 
   init() {
-    this.#renderInfo();
     this.#renderTrip();
     this.newPointButton.addEventListener('click', this.#newPointButtonClickHandler);
   }
 
   #renderInfo() {
+    if (this.#pointsModel.isLoading || this.#pointsModel.isLoadingError) {
+      return;
+    }
+
     const points = this.#pointsModel.points;
     const destinations = this.#pointsModel.destinations;
     const offers = this.#pointsModel.offers;
@@ -86,6 +93,20 @@ export default class TripPresenter {
   }
 
   #renderTrip({renderNewPoint = false} = {}) {
+    if (this.#pointsModel.isLoading) {
+      this.newPointButton.disabled = true;
+      this.#renderLoading();
+      return;
+    }
+
+    if (this.#pointsModel.isLoadingError) {
+      this.newPointButton.disabled = true;
+      this.#renderFailedLoad();
+      return;
+    }
+
+    this.newPointButton.disabled = false;
+
     const points = this.points;
 
     if (!points.length && !renderNewPoint) {
@@ -115,6 +136,16 @@ export default class TripPresenter {
     });
 
     render(this.#sortComponent, this.eventsContainer, RenderPosition.AFTERBEGIN);
+  }
+
+  #renderLoading() {
+    this.#loadingComponent = new LoadingView();
+    render(this.#loadingComponent, this.eventsContainer);
+  }
+
+  #renderFailedLoad() {
+    this.#failedLoadComponent = new FailedLoadView();
+    render(this.#failedLoadComponent, this.eventsContainer);
   }
 
   #renderNoPoints() {
@@ -182,15 +213,19 @@ export default class TripPresenter {
     remove(this.#sortComponent);
     remove(this.#pointListComponent);
     remove(this.#noPointsComponent);
+    remove(this.#loadingComponent);
+    remove(this.#failedLoadComponent);
     remove(this.#newPointComponent);
 
     this.#sortComponent = null;
     this.#pointListComponent = null;
     this.#noPointsComponent = null;
+    this.#loadingComponent = null;
+    this.#failedLoadComponent = null;
     this.#newPointComponent = null;
     this.#pointsListContainer = null;
     this.#isNewPointFormOpen = false;
-    this.newPointButton.disabled = false;
+    this.newPointButton.disabled = this.#pointsModel.isLoading || this.#pointsModel.isLoadingError;
     document.removeEventListener('keydown', this.#escKeyDownHandler);
   }
 
@@ -198,7 +233,7 @@ export default class TripPresenter {
     remove(this.#newPointComponent);
     this.#newPointComponent = null;
     this.#isNewPointFormOpen = false;
-    this.newPointButton.disabled = false;
+    this.newPointButton.disabled = this.#pointsModel.isLoading || this.#pointsModel.isLoadingError;
     document.removeEventListener('keydown', this.#escKeyDownHandler);
   }
 
@@ -230,6 +265,7 @@ export default class TripPresenter {
       case UpdateType.PATCH:
         this.#pointPresenter.get(data.id)?.init(data);
         break;
+      case UpdateType.INIT:
       case UpdateType.MINOR:
       case UpdateType.MAJOR:
         this.#clearTrip();
@@ -240,16 +276,16 @@ export default class TripPresenter {
     }
   };
 
-  #handleViewAction = (actionType, updateType, update) => {
+  #handleViewAction = async (actionType, updateType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.#pointsModel.updatePoint(updateType, update);
+        await this.#pointsModel.updatePoint(updateType, update);
         break;
       case UserAction.ADD_POINT:
-        this.#pointsModel.addPoint(updateType, {...update, id: crypto.randomUUID()});
+        await this.#pointsModel.addPoint(updateType, update);
         break;
       case UserAction.DELETE_POINT:
-        this.#pointsModel.deletePoint(updateType, update);
+        await this.#pointsModel.deletePoint(updateType, update);
         break;
     }
   };
@@ -273,7 +309,7 @@ export default class TripPresenter {
   };
 
   #newPointButtonClickHandler = () => {
-    if (this.#isNewPointFormOpen) {
+    if (this.#isNewPointFormOpen || this.#pointsModel.isLoading || this.#pointsModel.isLoadingError) {
       return;
     }
 
