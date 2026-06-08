@@ -112,7 +112,6 @@ export {
   humanizeDateTime,
   humanizeEditDate,
   calculateDuration,
-  formatDateForTitle,
   getInfoTitle,
   getInfoDates,
   getTotalCost,
