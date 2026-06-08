@@ -37,12 +37,14 @@ const calculateDuration = (dateFrom, dateTo) => {
 
 const formatDateForTitle = (date) => dayjs(date).format(INFO_DATE_FORMAT).toUpperCase();
 
+const getSortedPointsByDay = (points) => [...points].sort((pointA, pointB) => new Date(pointA.dateFrom) - new Date(pointB.dateFrom));
+
 const getInfoTitle = (points, destinations) => {
   if (!points || !points.length) {
     return '';
   }
 
-  let destinationNames = points.map((point) => {
+  let destinationNames = getSortedPointsByDay(points).map((point) => {
     const destination = destinations.find((d) => d.id === point.destination);
     return destination ? destination.name : '';
   });
@@ -64,9 +66,7 @@ const getInfoDates = (points) => {
     return null;
   }
 
-  const sortedPoints = [...points].sort((a, b) =>
-    new Date(a.dateFrom) - new Date(b.dateFrom)
-  );
+  const sortedPoints = getSortedPointsByDay(points);
 
   return {
     start: formatDateForTitle(sortedPoints[0].dateFrom),
@@ -112,7 +112,6 @@ export {
   humanizeDateTime,
   humanizeEditDate,
   calculateDuration,
-  formatDateForTitle,
   getInfoTitle,
   getInfoDates,
   getTotalCost,
