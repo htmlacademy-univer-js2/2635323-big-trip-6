@@ -212,15 +212,11 @@ export default class TripPresenter {
   }
 
   #createNewPoint() {
-    const now = new Date();
-    const dateTo = new Date(now);
-    dateTo.setHours(dateTo.getHours() + 1);
-
     return {
       type: EVENT_TYPES[5],
       destination: '',
-      dateFrom: now,
-      dateTo,
+      dateFrom: null,
+      dateTo: null,
       basePrice: 0,
       offers: [],
       isFavorite: false
@@ -287,10 +283,14 @@ export default class TripPresenter {
         this.#pointPresenter.get(data.id)?.init(data);
         break;
       case UpdateType.INIT:
-      case UpdateType.MINOR:
       case UpdateType.MAJOR:
         this.#clearTrip();
         this.#currentSortType = SortType.DAY;
+        this.#renderInfo();
+        this.#renderTrip();
+        break;
+      case UpdateType.MINOR:
+        this.#clearTrip();
         this.#renderInfo();
         this.#renderTrip();
         break;

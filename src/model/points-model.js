@@ -1,7 +1,7 @@
 import Observable from '../framework/observable.js';
 import {UpdateType} from '../const.js';
 
-export default class Model extends Observable {
+export default class PointsModel extends Observable {
   #apiService = null;
   #points = [];
   #destinations = [];
@@ -57,10 +57,6 @@ export default class Model extends Observable {
     this._notify(UpdateType.INIT);
   }
 
-  setPoints(updateType, points) {
-    this.#points = points;
-    this._notify(updateType);
-  }
 
   async updatePoint(updateType, update) {
     const response = await this.#apiService.updatePoint(update);

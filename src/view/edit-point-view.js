@@ -19,8 +19,8 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
   const {
     type = EVENT_TYPES[0],
     destination: destinationId = '',
-    dateFrom = new Date(),
-    dateTo = new Date(),
+    dateFrom = null,
+    dateTo = null,
     basePrice = 0,
     offers: selectedOfferIds = [],
     isDisabled = false,
@@ -32,6 +32,8 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
   const typeOffers = offers[type] || [];
   const selectedOffers = typeOffers.filter((offer) => selectedOfferIds.includes(offer.id));
   const disabledAttribute = isDisabled ? 'disabled' : '';
+  const dateFromValue = dateFrom ? humanizeEditDate(dateFrom) : '';
+  const dateToValue = dateTo ? humanizeEditDate(dateTo) : '';
   const saveButtonText = isSaving ? 'Saving...' : 'Save';
   let resetButtonText = point.id ? 'Delete' : 'Cancel';
 
@@ -147,7 +149,8 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               id="event-start-time-1"
               type="text"
               name="event-start-time"
-              value="${humanizeEditDate(dateFrom)}"
+              value="${dateFromValue}"
+              required
               ${disabledAttribute}
             >
             &mdash;
@@ -157,7 +160,8 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
               id="event-end-time-1"
               type="text"
               name="event-end-time"
-              value="${humanizeEditDate(dateTo)}"
+              value="${dateToValue}"
+              required
               ${disabledAttribute}
             >
           </div>
@@ -180,8 +184,8 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
           </div>
 
           <button class="event__save-btn btn btn--blue" type="submit" ${disabledAttribute}>${saveButtonText}</button>
-          <button class="event__reset-btn" type="reset" ${disabledAttribute}>${resetButtonText}</button>
-          <button class="event__rollup-btn" type="button" ${disabledAttribute}>
+          <button class="event__reset-btn" type="button">${resetButtonText}</button>
+          <button class="event__rollup-btn" type="button">
             <span class="visually-hidden">Open event</span>
           </button>
         </header>
@@ -344,7 +348,16 @@ export default class EditPointView extends AbstractStatefulView {
   };
 
   #dateFromChangeHandler = ([userDate]) => {
-    this._setState({dateFrom: userDate});
+    const dateTo = this._state.dateTo && this._state.dateTo < userDate
+      ? userDate
+      : this._state.dateTo;
+
+    this._setState({dateFrom: userDate, dateTo});
+    this.#datepickerTo.set('minDate', userDate);
+
+    if (dateTo === userDate) {
+      this.#datepickerTo.setDate(userDate);
+    }
   };
 
   #dateToChangeHandler = ([userDate]) => {
@@ -352,14 +365,18 @@ export default class EditPointView extends AbstractStatefulView {
   };
 
   #setDatepickers() {
+    const datepickerConfig = {
+      dateFormat: DateFormat.DATE_PICKER,
+      enableTime: true,
+      locale: Russian,
+      'time_24hr': true,
+    };
+
     this.#datepickerFrom = flatpickr(
       this.element.querySelector('[name="event-start-time"]'),
       {
-        dateFormat: DateFormat.DATE_PICKER,
-        defaultDate: this._state.dateFrom,
-        enableTime: true,
-        locale: Russian,
-        'time_24hr': true,
+        ...datepickerConfig,
+        defaultDate: this._state.dateFrom || null,
         onChange: this.#dateFromChangeHandler,
       },
     );
@@ -367,11 +384,9 @@ export default class EditPointView extends AbstractStatefulView {
     this.#datepickerTo = flatpickr(
       this.element.querySelector('[name="event-end-time"]'),
       {
-        dateFormat: DateFormat.DATE_PICKER,
-        defaultDate: this._state.dateTo,
-        enableTime: true,
-        locale: Russian,
-        'time_24hr': true,
+        ...datepickerConfig,
+        defaultDate: this._state.dateTo || null,
+        minDate: this._state.dateFrom || null,
         onChange: this.#dateToChangeHandler,
       },
     );

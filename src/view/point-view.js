@@ -1,3 +1,4 @@
+import he from 'he';
 import {
   humanizePointDate,
   humanizePointTime,
@@ -6,6 +7,7 @@ import {
 } from '../utils.js';
 import AbstractView from '../framework/view/abstract-view.js';
 
+const encodeText = (value) => he.encode(String(value ?? ''));
 
 function createPointTemplate(point, destination, typeOffers) {
   const {
@@ -32,9 +34,9 @@ function createPointTemplate(point, destination, typeOffers) {
     <ul class="event__selected-offers">
       ${selectedOffers.map((offer) => `
         <li class="event__offer">
-          <span class="event__offer-title">${offer.title}</span>
+          <span class="event__offer-title">${encodeText(offer.title)}</span>
           &plus;&euro;&nbsp;
-          <span class="event__offer-price">${offer.price}</span>
+          <span class="event__offer-price">${encodeText(offer.price)}</span>
         </li>
       `).join('')}
     </ul>
@@ -43,21 +45,21 @@ function createPointTemplate(point, destination, typeOffers) {
   return `
     <li class="trip-events__item">
       <div class="event">
-        <time class="event__date" datetime="${dateTimeFrom}">${dateFormatted}</time>
+        <time class="event__date" datetime="${encodeText(dateTimeFrom)}">${encodeText(dateFormatted)}</time>
         <div class="event__type">
-          <img class="event__type-icon" width="42" height="42" src="img/icons/${type.toLowerCase()}.png" alt="Event type icon">
+          <img class="event__type-icon" width="42" height="42" src="img/icons/${encodeText(type.toLowerCase())}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${type} ${destination?.name || ''}</h3>
+        <h3 class="event__title">${encodeText(type)} ${encodeText(destination?.name || '')}</h3>
         <div class="event__schedule">
           <p class="event__time">
-            <time class="event__start-time" datetime="${dateTimeFrom}">${timeFrom}</time>
+            <time class="event__start-time" datetime="${encodeText(dateTimeFrom)}">${encodeText(timeFrom)}</time>
             &mdash;
-            <time class="event__end-time" datetime="${dateTimeTo}">${timeTo}</time>
+            <time class="event__end-time" datetime="${encodeText(dateTimeTo)}">${encodeText(timeTo)}</time>
           </p>
-          <p class="event__duration">${duration}</p>
+          <p class="event__duration">${encodeText(duration)}</p>
         </div>
         <p class="event__price">
-          &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
+          &euro;&nbsp;<span class="event__price-value">${encodeText(basePrice)}</span>
         </p>
         ${offersTemplate}
         <button class="event__favorite-btn ${favoriteClass}" type="button">
@@ -90,7 +92,7 @@ export default class PointView extends AbstractView{
     this.#handleFavoriteClick = onFavoriteClick;
 
     this.element.querySelector('.event__rollup-btn')
-      .addEventListener('click', this.#ArrowClickHandler);
+      .addEventListener('click', this.#arrowClickHandler);
 
     this.element.querySelector('.event__favorite-btn')
       .addEventListener('click', this.#favoriteClickHandler);
@@ -102,7 +104,7 @@ export default class PointView extends AbstractView{
     return createPointTemplate(this.#point, destination, typeOffers);
   }
 
-  #ArrowClickHandler = (evt) => {
+  #arrowClickHandler = (evt) => {
     evt.preventDefault();
     this.#handleArrowClick();
   };

@@ -10,6 +10,8 @@ const EVENT_TYPES = [
   'restaurant'
 ];
 
+const DEFAULT_POINT_TYPE = 'Flight';
+
 const SortType = {
   DAY: 'day',
   TIME: 'time',
@@ -36,10 +38,14 @@ const UpdateType = {
   MAJOR: 'MAJOR'
 };
 
+const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
+
 export {
   EVENT_TYPES,
+  DEFAULT_POINT_TYPE,
   SortType,
   FilterType,
   UserAction,
-  UpdateType
+  UpdateType,
+  capitalize
 };
