@@ -4,7 +4,7 @@ import PointsModel from './model/points-model.js';
 import FilterModel from './model/filter-model.js';
 import TripApiService from './api/trip-api-service.js';
 
-const AUTHORIZATION = `Basic ${Math.random().toString(36).slice(2)}`;
+const AUTHORIZATION = `Basic ${crypto.randomUUID()}`;
 const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';
 
 const tripApiService = new TripApiService(END_POINT, AUTHORIZATION);

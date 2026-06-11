@@ -9,6 +9,7 @@ const TIME_FORMAT = 'HH:mm';
 const DATE_TIME_ATTRIBUTE_FORMAT = 'YYYY-MM-DDTHH:mm';
 const EDIT_FORM_DATE_FORMAT = 'DD/MM/YY HH:mm';
 const INFO_DATE_FORMAT = 'DD MMM';
+const DESTINATION_NAMES_LIMIT = 3;
 
 const humanizePointDate = (date) => dayjs(date).format(DATE_FORMAT).toUpperCase();
 
@@ -51,7 +52,7 @@ const getInfoTitle = (points, destinations) => {
 
   destinationNames = destinationNames.filter((element) => element);
 
-  if (destinationNames.length <= 3) {
+  if (destinationNames.length <= DESTINATION_NAMES_LIMIT) {
     return destinationNames.join(' — ');
   }
 

@@ -38,14 +38,11 @@ const UpdateType = {
   MAJOR: 'MAJOR'
 };
 
-const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
-
 export {
   EVENT_TYPES,
   DEFAULT_POINT_TYPE,
   SortType,
   FilterType,
   UserAction,
-  UpdateType,
-  capitalize
+  UpdateType
 };
