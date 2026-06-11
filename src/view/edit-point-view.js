@@ -28,7 +28,7 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
     isDeleting = false,
   } = point;
 
-  const destination = destinations.find((dest) => dest.id === destinationId) || null;
+  const destination = destinations.find((destinationItem) => destinationItem.id === destinationId) || null;
   const typeOffers = offers[type] || [];
   const selectedOffers = typeOffers.filter((offer) => selectedOfferIds.includes(offer.id));
   const disabledAttribute = isDisabled ? 'disabled' : '';
@@ -58,8 +58,8 @@ function createEditPointTemplate(point = {}, destinations = [], offers = {}) {
     </div>
   `).join('');
 
-  const destinationsTemplate = destinations.map((dest) => `
-    <option value="${dest.name}"></option>
+  const destinationsTemplate = destinations.map((destinationItem) => `
+    <option value="${destinationItem.name}"></option>
   `).join('');
 
   const offersTemplate = typeOffers.length > 0 ? `
@@ -268,16 +268,15 @@ export default class EditPointView extends AbstractStatefulView {
       return;
     }
 
-    const point = {
-      ...this._state,
-      ...this.#getFormData()
-    };
+    const formData = this.#getFormData();
 
-    if (!this.#destinations.some((destination) => destination.id === point.destination)) {
+    this._setState(formData);
+
+    if (!this.#destinations.some((destination) => destination.id === this._state.destination)) {
       return;
     }
 
-    this.#handleFormSubmit(point);
+    this.#handleFormSubmit({...this._state});
   };
 
   #arrowClickHandler = (evt) => {
@@ -401,7 +400,7 @@ export default class EditPointView extends AbstractStatefulView {
     return {
       type: this._state.type,
       basePrice: Number(this.element.querySelector('.event__input--price').value),
-      destination: selectedDestination ? selectedDestination.id : this._state.destination,
+      destination: selectedDestination ? selectedDestination.id : '',
       dateFrom: this._state.dateFrom,
       dateTo: this._state.dateTo,
       offers: checkedOffers
